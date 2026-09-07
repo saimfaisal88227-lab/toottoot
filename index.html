@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Toot-Toot · 3D Restaurant</title>
+  <!-- Google Fonts: foodie / playful style -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* reset & base */
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Quicksand', sans-serif;
+      color: #fff;
+      background: #0b0a0a;
+    }
+
+    /* 3D canvas container */
+    #canvas-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    /* overlay – pre‑opening theme + foodie style */
+    .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      pointer-events: none; /* allow clicking through to canvas if needed */
+      background: radial-gradient(circle at 30% 40%, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 90%);
+    }
+
+    .content-box {
+      max-width: 800px;
+      padding: 2rem 2.5rem;
+      background: rgba(20, 15, 10, 0.5);
+      backdrop-filter: blur(6px);
+      border-radius: 60px 20px 60px 20px;
+      border: 2px solid rgba(255, 215, 140, 0.6);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 2px #f7c35c inset;
+      pointer-events: auto;
+      transition: 0.3s ease;
+      animation: floatGlow 3s infinite alternate;
+    }
+
+    @keyframes floatGlow {
+      0% { transform: translateY(0px) scale(1); box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 2px #f7c35c inset; }
+      100% { transform: translateY(-8px) scale(1.01); box-shadow: 0 30px 60px rgba(255, 180, 50, 0.3), 0 0 0 4px #ffb347 inset; }
+    }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 5.5rem;
+      letter-spacing: 2px;
+      margin: 0 0 0.2rem 0;
+      text-shadow: 0 6px 0 #b45f1a, 0 12px 20px rgba(0,0,0,0.6);
+      color: #ffdd99;
+      word-break: break-word;
+      background: linear-gradient(135deg, #ffe6b0, #ffb86b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 8px 6px #3f2a0e);
+    }
+
+    .subhead {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #ffecce;
+      text-shadow: 0 4px 10px #4f3100;
+      background: rgba(0,0,0,0.3);
+      display: inline-block;
+      padding: 0.2rem 1.8rem;
+      border-radius: 40px;
+      backdrop-filter: blur(2px);
+      letter-spacing: 2px;
+      font-family: 'Quicksand', sans-serif;
+      border: 1px solid #f7b05e;
+      margin-bottom: 1rem;
+    }
+
+    .info-tag {
+      font-size: 1.3rem;
+      background: rgba(10, 7, 3, 0.6);
+      backdrop-filter: blur(8px);
+      padding: 0.6rem 2rem;
+      border-radius: 60px;
+      border-left: 6px solid #f8b84a;
+      border-right: 6px solid #f8b84a;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-weight: 600;
+      color: #fae3be;
+      margin: 0.5rem 0;
+      box-shadow: 0 0 20px rgba(255, 200, 70, 0.2);
+    }
+
+    .info-tag span {
+      color: #ffd78a;
+      font-weight: 700;
+      background: #2f1f0b;
+      padding: 0 14px;
+      border-radius: 30px;
+      line-height: 1.8;
+    }
+
+    .pre-open-badge {
+      background: #d98c2e;
+      color: #1d1305;
+      font-weight: 800;
+      font-size: 1.2rem;
+      padding: 0.3rem 1.8rem;
+      border-radius: 60px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      box-shadow: 0 0 0 2px #ffce7a, 0 6px 0 #6b3f0b;
+      margin-top: 1rem;
+      font-family: 'Fredoka One', cursive;
+      transform: rotate(-1deg);
+    }
+
+    .foodie-emoji {
+      font-size: 2.8rem;
+      filter: drop-shadow(0 6px 4px #33200a);
+      display: inline-block;
+      animation: wiggle 2s infinite;
+    }
+
+    @keyframes wiggle {
+      0% { transform: rotate(-6deg); }
+      50% { transform: rotate(6deg); }
+      100% { transform: rotate(-6deg); }
+    }
+
+    .footer-note {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      opacity: 0.8;
+      letter-spacing: 2px;
+      background: rgba(0,0,0,0.3);
+      padding: 0.4rem 1.6rem;
+      border-radius: 40px;
+      backdrop-filter: blur(4px);
+      border: 1px solid #dba14b;
+    }
+
+    /* responsive */
+    @media (max-width: 700px) {
+      h1 { font-size: 3.8rem; }
+      .subhead { font-size: 1.3rem; padding: 0.1rem 1rem; }
+      .info-tag { font-size: 1rem; flex-wrap: wrap; }
+      .content-box { padding: 1.5rem; margin: 0 1rem; }
+      .pre-open-badge { font-size: 1rem; }
+    }
+
+    /* loading screen (optional) */
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #1b130c;
+      z-index: 999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #f5c27b;
+      font-size: 2rem;
+      font-family: 'Fredoka One', cursive;
+      letter-spacing: 6px;
+      transition: opacity 1s;
+    }
+    .loading.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="loading" id="loadingScreen">🍽️ Toot-Toot</div>
+
+  <div id="canvas-container"></div>
+
+  <div class="hero-overlay">
+    <div class="content-box">
+      <div class="foodie-emoji">🍜 🥘 🍰</div>
+      <h1>Toot-Toot</h1>
+      <div class="subhead">Restaurant & Lounge</div>
+      
+      <div class="info-tag">
+        ⏰ <span>06:00 – 22:00</span> · 今日营业
+      </div>
+      <div class="info-tag" style="border-left-color: #7ac7f5; border-right-color: #7ac7f5;">
+        📍 地图 · 氛围 lounge
+      </div>
+      
+      <div class="pre-open-badge">
+        ✦  Pre‑Opening  ✦
+      </div>
+      <div style="margin-top: 0.8rem; font-size: 1.1rem; background: #2b1c0b80; padding: 0.3rem 1.2rem; border-radius: 30px; backdrop-filter: blur(4px); border: 1px dashed #f8b84a;">
+        🥂  coming soon ·  foodie paradise
+      </div>
+    </div>
+    <div class="footer-note">
+      🍕 3D experience · Toot-Toot 
+    </div>
+  </div>
+
+  <!-- Three.js + add-ons from CDN -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.126.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.126.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // --- setup scene, camera, renderers ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a120b); // warm dark
+
+    // camera
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(7, 5, 12);
+    camera.lookAt(0, 0, 0);
+
+    // WebGL renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // CSS2 renderer for labels
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none'; // avoid blocking overlay
+    container.appendChild(labelRenderer.domElement);
+
+    // --- controls (allows user to drag & explore 3D) ---
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.2;
+    controls.enableZoom = true;
+    controls.enablePan = false;
+    controls.target.set(0, 1.5, 0);
+    controls.maxPolarAngle = Math.PI / 2.4;
+
+    // --- LIGHTS ---
+    // ambient warm
+    const ambient = new THREE.AmbientLight(0x404060, 0.6);
+    scene.add(ambient);
+
+    // key light
+    const keyLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+    keyLight.position.set(5, 10, 7);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffcc88, 0.8);
+    fillLight.position.set(-5, 3, 5);
+    scene.add(fillLight);
+
+    const backLight = new THREE.PointLight(0xffaa55, 0.5);
+    backLight.position.set(0, 3, -8);
+    scene.add(backLight);
+
+    // accent spot
+    const spot = new THREE.SpotLight(0xffaa44, 1.2);
+    spot.position.set(2, 7, 4);
+    spot.angle = 0.3;
+    spot.penumbra = 0.5;
+    spot.decay = 1;
+    spot.distance = 30;
+    spot.castShadow = true;
+    scene.add(spot);
+
+    // --- FOODIE 3D SCENE: playful objects ---
+
+    // 1. central pedestal / table
+    const tableMat = new THREE.MeshStandardMaterial({ color: 0x6b4a2e, roughness: 0.7, metalness: 0.1 });
+    const tableGeo = new THREE.CylinderGeometry(2.5, 2.8, 0.4, 32);
+    const table = new THREE.Mesh(tableGeo, tableMat);
+    table.position.set(0, 0.2, 0);
+    table.receiveShadow = true;
+    table.castShadow = true;
+    scene.add(table);
+
+    // 2. giant food items (foodie style)
+    function createFoodItem(geo, color, pos, scale = 1, emissive = 0x000000) {
+      const mat = new THREE.MeshStandardMaterial({ 
+        color: color, 
+        roughness: 0.4, 
+        metalness: 0.1,
+        emissive: emissive,
+        emissiveIntensity: 0.15
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      mesh.scale.set(scale, scale, scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    // pizza slice (cone + cylinder)
+    const pizzaGroup = new THREE.Group();
+    const baseCyl = new THREE.CylinderGeometry(1.2, 1.2, 0.2, 6);
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0xe6b86b, roughness: 0.8 });
+    const base = new THREE.Mesh(baseCyl, baseMat);
+    base.rotation.y = 0.3;
+    base.position.y = 0.1;
+    pizzaGroup.add(base);
+
+    const toppingMat = new THREE.MeshStandardMaterial({ color: 0xcc3333, roughness: 0.6 });
+    const topping = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.1, 8), toppingMat);
+    topping.position.set(0.4, 0.25, 0.3);
+    pizzaGroup.add(topping);
+    const topping2 = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6), new THREE.MeshStandardMaterial({ color: 0x44aa44 }));
+    topping2.position.set(-0.3, 0.3, -0.4);
+    pizzaGroup.add(topping2);
+    pizzaGroup.position.set(-1.8, 0.7, 1.2);
+    pizzaGroup.scale.set(0.9, 0.9, 0.9);
+    scene.add(pizzaGroup);
+
+    // burger stack
+    const burgerGroup = new THREE.Group();
+    const bunTop = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16), new THREE.MeshStandardMaterial({ color: 0xdba149, roughness: 0.7 }));
+    bunTop.scale.set(1, 0.5, 1);
+    bunTop.position.y = 0.9;
+    burgerGroup.add(bunTop);
+    const patty = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.2, 12), new THREE.MeshStandardMaterial({ color: 0x6b3f1f, roughness: 0.9 }));
+    patty.position.y = 0.6;
+    burgerGroup.add(patty);
+    const cheese = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.1, 12), new THREE.MeshStandardMaterial({ color: 0xffaa33, emissive: 0x442200, emissiveIntensity: 0.1 }));
+    cheese.position.y = 0.75;
+    burgerGroup.add(cheese);
+    const bunBottom = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.3, 12), new THREE.MeshStandardMaterial({ color: 0xcc8e4a, roughness: 0.8 }));
+    bunBottom.position.y = 0.2;
+    burgerGroup.add(bunBottom);
+    burgerGroup.position.set(2.0, 0.7, -1.0);
+    burgerGroup.scale.set(0.8, 0.8, 0.8);
+    scene.add(burgerGroup);
+
+    // ice cream cone
+    const coneGroup = new THREE.Group();
+    const coneMesh = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.2, 8), new THREE.MeshStandardMaterial({ color: 0xdba14b, roughness: 0.7 }));
+    coneMesh.position.y = 0.6;
+    coneGroup.add(coneMesh);
+    const scoop = new THREE.Mesh(new THREE.SphereGeometry(0.65, 12), new THREE.MeshStandardMaterial({ color: 0xff99aa, emissive: 0x551122, emissiveIntensity: 0.1 }));
+    scoop.position.y = 1.3;
+    coneGroup.add(scoop);
+    const cherry = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8), new THREE.MeshStandardMaterial({ color: 0xcc2244 }));
+    cherry.position.set(0.2, 1.7, 0.2);
+    coneGroup.add(cherry);
+    coneGroup.position.set(-1.5, 0.8, -2.2);
+    coneGroup.scale.set(0.9, 0.9, 0.9);
+    scene.add(coneGroup);
+
+    // floating donut
+    const donutMat = new THREE.MeshStandardMaterial({ color: 0xffaa77, roughness: 0.5, emissive: 0x553322, emissiveIntensity: 0.1 });
+    const donut = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.3, 12, 24), donutMat);
+    donut.position.set(2.2, 1.7, 1.8);
+    donut.rotation.x = 0.5;
+    donut.rotation.z = 0.3;
+    donut.castShadow = true;
+    scene.add(donut);
+
+    // extra: floating 'Toot-Toot' 3D text using CSS2D 
+    const labelDiv = document.createElement('div');
+    labelDiv.textContent = '🍽️ TOOT-TOOT';
+    labelDiv.style.color = '#ffdd99';
+    labelDiv.style.fontFamily = "'Fredoka One', cursive";
+    labelDiv.style.fontSize = '42px';
+    labelDiv.style.textShadow = '0 8px 16px #1f1308, 0 0 20px #ffb347';
+    labelDiv.style.background = 'rgba(20,10,2,0.3)';
+    labelDiv.style.padding = '0.2rem 1.8rem';
+    labelDiv.style.borderRadius = '60px';
+    labelDiv.style.backdropFilter = 'blur(4px)';
+    labelDiv.style.border = '2px solid #f7b05e';
+    labelDiv.style.letterSpacing = '4px';
+    const labelObj = new CSS2DObject(labelDiv);
+    labelObj.position.set(0, 3.2, 0);
+    scene.add(labelObj);
+
+    // small floating food emojis as CSS2D
+    const emojis = ['🍕', '🍔', '🌮', '🥗', '🍣', '🍰'];
+    emojis.forEach((emoji, i) => {
+      const d = document.createElement('div');
+      d.textContent = emoji;
+      d.style.fontSize = '3.2rem';
+      d.style.filter = 'drop-shadow(0 8px 10px #0a0602)';
+      const label = new CSS2DObject(d);
+      const angle = (i / emojis.length) * Math.PI * 2;
+      const radius = 3.8;
+      label.position.set(Math.cos(angle) * radius, 1.2 + Math.sin(i) * 0.5, Math.sin(angle) * radius);
+      scene.add(label);
+    });
+
+    // floor / subtle grid
+    const gridHelper = new THREE.GridHelper(12, 20, 0xffaa55, 0xaa7733);
+    gridHelper.position.y = -0.1;
+    scene.add(gridHelper);
+
+    // floating particles (foodie dust)
+    const particleGeo = new THREE.BufferGeometry();
+    const particleCount = 300;
+    const positions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i += 3) {
+      positions[i] = (Math.random() - 0.5) * 18;
+      positions[i+1] = Math.random() * 6 + 0.5;
+      positions[i+2] = (Math.random() - 0.5) * 18;
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: 0xffaa66,
+      size: 0.08,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(particleGeo, particleMat);
+    scene.add(particles);
+
+    // --- animation loop ---
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // auto-rotate
+      controls.update();
+
+      // floating animations
+      const time = Date.now() * 0.001;
+      donut.rotation.y += 0.008;
+      pizzaGroup.rotation.y = Math.sin(time * 0.3) * 0.2;
+      burgerGroup.rotation.y += 0.005;
+      coneGroup.rotation.y = Math.sin(time * 0.5) * 0.1;
+      particles.rotation.y += 0.0003;
+
+      // render
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+    }
+
+    animate();
+
+    // --- resize handler ---
+    window.addEventListener('resize', () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      labelRenderer.setSize(w, h);
+    });
+
+    // hide loading screen
+    setTimeout(() => {
+      document.getElementById('loadingScreen').classList.add('hide');
+    }, 800);
+
+    // small interaction: click to toggle autoRotate
+    renderer.domElement.addEventListener('click', () => {
+      controls.autoRotate = !controls.autoRotate;
+    });
+  </script>
+</body>
+</html>
